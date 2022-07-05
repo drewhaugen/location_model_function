@@ -392,6 +392,7 @@ build_location_tree <- function(pitch_type_name, pitch_data){
 
 # Load in data
 library(readr)
+library(dplyr)
 library(baseballr)
 data1 <- read_csv("pitcher_data_2020.csv")
 data2 <- read_csv("pitcher_data_2021.csv")
@@ -560,25 +561,25 @@ foul_rv <- full_data%>%
   rename(outcome = foul)
 
 inplay_rv <- full_data%>%
-  dplyr::mutate(fair = ifelse(description == "hit_into_play",
+  mutate(fair = ifelse(description == "hit_into_play",
                               "fair", "foul"))%>%
-  dplyr::filter(fair == "fair", type == "X",
+  filter(fair == "fair", type == "X",
                 !is.na(launch_speed), !is.na(launch_angle))%>%
-  dplyr::mutate(la_group = ifelse(launch_angle <= 10, "ground_ball",
+  mutate(la_group = ifelse(launch_angle <= 10, "ground_ball",
                                   ifelse(launch_angle > 10 & launch_angle <= 25, "line_drive",
                                          ifelse(launch_angle > 25 & launch_angle <= 45, "fly_ball",
                                                 "pop_up"))))%>%
-  dplyr::mutate(ev_group = ifelse(launch_speed < 90, "weak",
+  mutate(ev_group = ifelse(launch_speed < 90, "weak",
                                   ifelse(launch_speed >= 90 & launch_speed < 95, "medium",
                                          ifelse(launch_speed >= 95 & launch_speed < 100, "hard",
                                                 ifelse(launch_speed >= 100 & launch_speed < 105, "very_hard",
                                                        "smoked")))))%>%
-  dplyr::mutate(bb_group = ifelse(la_group == "pop_up", la_group, paste0(la_group, "_", ev_group)))%>%
-  dplyr::filter(!is.na(bb_group))%>%
-  dplyr::mutate(bb_group = as.factor(bb_group))%>%
-  dplyr::group_by(bb_group)%>%
-  dplyr::summarize(mean_rv = mean(delta_run_exp, na.rm = T))%>%
-  dplyr::rename(outcome = bb_group)
+  mutate(bb_group = ifelse(la_group == "pop_up", la_group, paste0(la_group, "_", ev_group)))%>%
+  filter(!is.na(bb_group))%>%
+  mutate(bb_group = as.factor(bb_group))%>%
+  group_by(bb_group)%>%
+  summarize(mean_rv = mean(delta_run_exp, na.rm = T))%>%
+  rename(outcome = bb_group)
 
 rv_df <- rbind(take_rv, whiff_rv, foul_rv, inplay_rv)%>%
   arrange(desc(mean_rv))
